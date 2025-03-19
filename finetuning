@@ -1,0 +1,26 @@
+# Fine Tuning 1
+# Load Existing Model for Retraining
+modelft = load_model('best_lstm_model90.h5', compile=False)
+
+# Normalize the data
+scaler = MinMaxScaler(feature_range=(0.1, 0.9))
+data_scaled = scaler.fit_transform(data[['DATA (psi)']].fillna(0))
+
+# Adjust optimizer here
+opt1 = Adam(learning_rate= 0.0001)
+# Compile with Optimized Hyperparameters
+modelft.compile(optimizer=opt1, loss=losses.MeanSquaredError(), metrics=['mae'])
+
+# Callbacks for Stability and Efficiency
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+modelft_checkpoint = ModelCheckpoint('best_lstm_model.h5', monitor='val_loss', save_best_only=True, mode='min', verbose=1)
+
+# Model Retraining
+history = modelft.fit(
+    X_train, y_train,
+    epochs=10,                     # To avoid overfitting
+    batch_size=16,                 # The smaller na more specific
+    validation_data=(X_test, y_test),
+    callbacks=[early_stopping, modelft_checkpoint],
+    verbose=1
+)
